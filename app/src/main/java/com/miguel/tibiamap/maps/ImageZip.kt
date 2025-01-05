@@ -2,11 +2,14 @@ package com.miguel.tibiamap.maps
 
 import android.content.Context
 import com.miguel.tibiamap.R
+import com.miguel.tibiamap.domain.data.CoordinatesJson
+import com.miguel.tibiamap.utils.JsonInfo
 import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 class ImageZip(private val context: Context) {
+    private val jsonInfo = JsonInfo()
     // Datos de configuración proporcionados
     val xMin = 31744
     val xMax = 34048
@@ -20,7 +23,21 @@ class ImageZip(private val context: Context) {
     val deltaX = xMax - xMin
     val deltaY = yMax - yMin
 
-    fun unzip(row: Int, col: Int, zoomLvl: Int): InputStream? {
+    fun unzip(
+        row: Int,
+        col: Int,
+        zoomLvl: Int,
+        configurationCoordinates: CoordinatesJson,
+        coordinates: Int
+    ): InputStream? {
+        val stringjson = jsonInfo.readJSON(context = context, resId = coordinates)
+        val configuration = configurationCoordinates.getCoordinates(stringjson!!)
+        val coordinate = configurationCoordinates.searchCoordinateData(
+            col = col,
+            row = row,
+            floor = 7,
+            coordinates = configuration!!.coordinates.level7
+        )
         val coordenadas = getTotalTiles(zoomLvl)
         println("coordenadas: $coordenadas")
         // Calculamos el número de tiles en función del zoom
@@ -45,8 +62,9 @@ class ImageZip(private val context: Context) {
         // Coordenadas absolutas del tile
         val tileXCoord = xMin + (col * tileWidth)
         val tileYCoord = yMin + (row * tileHeight)
-        println("Tile requested: row=$row, col=$col, zoomLvl=$zoomLvl")
-        val tileName = "Minimap_Color_${tileXCoord}_${tileYCoord}_${7}.png"
+        //println("Tile requested: row=$row, col=$col, zoomLvl=$zoomLvl")
+        //val tileName = "Minimap_Color_${tileXCoord}_${tileYCoord}_${7}.png"
+        val tileName = "Minimap_Color_${coordinate?.image_name_number}_${coordinate?.floor}.png"
         // Ruta del archivo ZIP dentro de res/raw/
         val zipFileResourceId = R.raw.minimap_without_markers  // Reemplaza con el nombre real del archivo en raw
         return try {
@@ -59,8 +77,8 @@ class ImageZip(private val context: Context) {
             while (zipStream.nextEntry.also { entry = it } != null) {
                 // Si encontramos el tile dentro del ZIP, devolver el InputStream
                 if (entry?.name == "minimap/$tileName") {  // Asegúrate de ajustar la ruta según cómo esté organizado el ZIP
-                    println("Entry: ${entry?.name}")
-                    println("TileName: minimap/$tileName")
+                    //println("Entry: ${entry?.name}")
+                    //println("TileName: minimap/$tileName")
                     return zipStream  // Devolver el InputStream del tile encontrado
                 }
                 zipStream.closeEntry()  // Cerrar la entrada si no es el tile buscado
@@ -70,6 +88,30 @@ class ImageZip(private val context: Context) {
         } catch (e: Exception) {
             // Manejar cualquier error al acceder al archivo ZIP
             e.printStackTrace()
+            null
+        }
+    }
+
+    fun unzip2(title: String, context: Context): ZipInputStream? {
+        return try {
+            // Ruta del archivo ZIP dentro de res/raw/
+            val zipFileResourceId = context.resources.openRawResource(R.raw.minimap_without_markers)  // Reemplaza con el nombre real del archivo en raw
+            // Crear ZipInputStream para leer el archivo ZIP
+            val zipStream = ZipInputStream(zipFileResourceId)
+            // Iterar sobre las entradas del archivo ZIP
+            var entry: ZipEntry?
+            while (zipStream.nextEntry.also { entry = it } != null) {
+                // Si encontramos el tile dentro del ZIP, devolver el InputStream
+                if (entry?.name == "minimap/$title") {  // Asegúrate de ajustar la ruta según cómo esté organizado el ZIP
+                    //println("Entry: ${entry?.name}")
+                    //println("TileName: minimap/$title")
+                    return zipStream  // Devolver el InputStream del tile encontrado
+                }
+                zipStream.closeEntry()  // Cerrar la entrada si no es el tile buscado
+            }
+            // Si no se encuentra el tile, devolver null
+            null
+        }catch (e: Exception){
             null
         }
     }

@@ -30,4 +30,12 @@ class JsonInfo {
         }
     }
 
+    fun readJSON(context: Context, resId: Int): String? {
+        val inputStream = context.resources.openRawResource(resId)
+        val jsonString = IOUtils.toString(inputStream, "UTF-8")
+        return jsonString
+    }
+
+
+
 }
