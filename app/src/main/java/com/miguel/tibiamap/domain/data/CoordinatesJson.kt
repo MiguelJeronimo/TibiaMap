@@ -7,7 +7,7 @@ import com.miguel.tibiamap.domain.Coordinates
 class CoordinatesJson {
     fun getCoordinates(data: String): Coordinates? {
         val gson = Gson()
-        val coordinates =gson.fromJson(data, Coordinates::class.java)
+        val coordinates = gson.fromJson(data, Coordinates::class.java)
         return coordinates
     }
 
