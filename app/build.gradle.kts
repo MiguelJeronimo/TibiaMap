@@ -44,6 +44,8 @@ dependencies {
     implementation ("ovh.plrapps:mapcompose:2.12.12")
     //libreria para trabajar con imagenes comprimidas
     implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
     implementation ("com.google.code.gson:gson:2.11.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

@@ -95,7 +95,7 @@ class ImageZip(private val context: Context) {
     fun unzip2(title: String, context: Context): ZipInputStream? {
         return try {
             // Ruta del archivo ZIP dentro de res/raw/
-            val zipFileResourceId = context.resources.openRawResource(R.raw.tibiamapscompose2)  // Reemplaza con el nombre real del archivo en raw
+            val zipFileResourceId = context.resources.openRawResource(R.raw.tibiamaps)  // Reemplaza con el nombre real del archivo en raw
             // Crear ZipInputStream para leer el archivo ZIP
             val zipStream = ZipInputStream(zipFileResourceId)
             // Iterar sobre las entradas del archivo ZIP
