@@ -40,12 +40,17 @@ import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
 import ovh.plrapps.mapcompose.api.addLayer
 import ovh.plrapps.mapcompose.api.addMarker
+import ovh.plrapps.mapcompose.api.centroidX
+import ovh.plrapps.mapcompose.api.centroidY
 import ovh.plrapps.mapcompose.api.enableFlingZoom
 import ovh.plrapps.mapcompose.api.enableRotation
 import ovh.plrapps.mapcompose.api.maxScale
 import ovh.plrapps.mapcompose.api.minScale
+import ovh.plrapps.mapcompose.api.rotateTo
+import ovh.plrapps.mapcompose.api.rotation
 import ovh.plrapps.mapcompose.api.scale
 import ovh.plrapps.mapcompose.api.scrollTo
+import ovh.plrapps.mapcompose.api.setStateChangeListener
 import ovh.plrapps.mapcompose.api.shouldLoopScale
 import ovh.plrapps.mapcompose.core.TileStreamProvider
 import ovh.plrapps.mapcompose.ui.MapUI
@@ -132,15 +137,30 @@ class MainActivity : ComponentActivity() {
                     enableFlingZoom()
                     enableRotation()
                 }
-
-                println("Floor: ${floor.intValue}")
+//                println("""Scale: ${state.scale}""")
+//                println("Max Scale: ${state.maxScale}")
+//                println("Min Scale: ${state.minScale}")
+//                println("Full Width: ${state.rotation}")
+//                println("Full Height: ${state.centroidX}")
+//                println("Tile Size: ${state.centroidY}")
+//                println("Floor: ${floor.intValue}")
                 //Mandamos la marca al dp thais
                 LaunchedEffect(Unit) {
                     state.scrollTo(
                         x = tibiaMaps.pixelInX(32369),
                         y = tibiaMaps.pixelInY(32241),
-                        destScale = 4f
+                        destScale = 15f
                     )
+                    state.setStateChangeListener {
+                        println("Scale: ${state.scale}")
+                        println("Max Scale: ${state.maxScale}")
+                        println("Min Scale: ${state.minScale}")
+                        println("Rotate: ${state.rotation}")
+                        println("centroIDX: ${state.centroidX}")
+                        println("CentroIdY: ${state.centroidY}")
+                    }
+                    //state.rotation = 45F
+                    //state.scale = 15.0f
                 }
 
                 Scaffold(
