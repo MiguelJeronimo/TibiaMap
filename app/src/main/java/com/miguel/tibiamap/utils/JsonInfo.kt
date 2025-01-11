@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import com.miguel.tibiamap.domain.Coordinates
+import com.miguel.tibiamap.domain.models.Marker
 import org.apache.commons.io.IOUtils
 import java.io.IOException
 
@@ -36,6 +37,12 @@ class JsonInfo {
         return jsonString
     }
 
+    fun readMaker(data: String): List<Marker> {
+        val gson = Gson()
+        //json is a list
+        val makers = gson.fromJson(data, Array<Marker>::class.java).toList()
+        return makers
+    }
 
 
 }

@@ -11,40 +11,33 @@ class TibiaMap {
     private val width = 2560.0
     private val height = 2048.0
 
-    fun pixelInX(x: Int): Double? {
-        if (x < xMin || x > xMax) {
-            println("Coordenada fuera de rango: x= $x")
-            return null
-        } else{
-            //val campledX = x.coerceIn(xMin, xMax)
+    fun pixelInX(x: Int): Double {
             val pixelX = (x - 31744).toDouble() / (34303 - 31744).toDouble()
             println("PixelX: ${pixelX}")
-            val offsetX = 0.0
+            val offsetX = 0.000009
             return pixelX + offsetX
-        }
     }
 
-    fun pixelInY(y: Int): Double? {
-        if (y < yMin || y > yMax) {
-            println("Coordenada fuera de rango: y= $y")
-            return null
-        }else {
-            //val campleyY = y.coerceIn(yMin, yMax)
+    fun pixelInY(y: Int): Double {
             val pixelY = (y - 30976).toDouble() / (33023 - 30976).toDouble()
             println("PixelY: ${pixelY}")
-            val offsetY = 0.015
+            val offsetY = 0.0010
             return pixelY + offsetY
-        }
     }
 
     fun imageName(name:String): String {
-        return when(name){
+        val image = when(name){
             "red down"->"red_down"
             "red up"->"red_up"
             "red left"->"red_left"
             "red right"->"red_right"
+            "?"-> "question"
+            "!"->"exclamation"
+            "$"-> "dollar"
             else->name
         }
+        println("Image2: $image")
+        return image
     }
 
 }

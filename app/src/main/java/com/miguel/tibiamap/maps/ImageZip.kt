@@ -95,15 +95,15 @@ class ImageZip(private val context: Context) {
     fun unzip2(title: String, context: Context): ZipInputStream? {
         return try {
             // Ruta del archivo ZIP dentro de res/raw/
-            val zipFileResourceId = context.resources.openRawResource(R.raw.minimap_without_markers)  // Reemplaza con el nombre real del archivo en raw
+            val zipFileResourceId = context.resources.openRawResource(R.raw.tibiamaps)  // Reemplaza con el nombre real del archivo en raw
             // Crear ZipInputStream para leer el archivo ZIP
             val zipStream = ZipInputStream(zipFileResourceId)
             // Iterar sobre las entradas del archivo ZIP
             var entry: ZipEntry?
             while (zipStream.nextEntry.also { entry = it } != null) {
                 // Si encontramos el tile dentro del ZIP, devolver el InputStream
-                if (entry?.name == "minimap/$title") {  // Asegúrate de ajustar la ruta según cómo esté organizado el ZIP
-                    //println("Entry: ${entry?.name}")
+                if (entry?.name == title) {  // Asegúrate de ajustar la ruta según cómo esté organizado el ZIP
+                    println("Entry: ${entry?.name}")
                     //println("TileName: minimap/$title")
                     return zipStream  // Devolver el InputStream del tile encontrado
                 }
