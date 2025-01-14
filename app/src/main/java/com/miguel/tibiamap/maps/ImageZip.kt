@@ -117,14 +117,6 @@ class ImageZip(private val context: Context) {
     }
 
 
-    private fun calculateAbsoluteCoordinates(row: Int, col: Int, zoomLvl: Int): Pair<Int, Int> {
-        val tileSize = 256 // Tamaño del tile en píxeles
-        val scaleFactor = 1 shl zoomLvl // 2^zoomLvl
-        val absoluteX = col * tileSize * scaleFactor
-        val absoluteY = row * tileSize * scaleFactor
-        return Pair(absoluteX, absoluteY)
-    }
-
     fun getTotalTiles(zoomLvl: Int): Pair<Int, Int> {
         val totalTiles = 1 shl zoomLvl // 2^zoomLvl
         return Pair(totalTiles, totalTiles)
