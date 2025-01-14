@@ -2,6 +2,7 @@ package com.miguel.tibiamap
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.LruCache
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -21,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +39,7 @@ import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
 import com.miguel.tibiamap.presentation.ToolTipMaker
 import com.miguel.tibiamap.presentation.components.MainSearchBar
+import com.miguel.tibiamap.presentation.components.TickerView
 import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
 import ovh.plrapps.mapcompose.api.addLayer
@@ -54,6 +58,8 @@ import ovh.plrapps.mapcompose.api.shouldLoopScale
 import ovh.plrapps.mapcompose.core.TileStreamProvider
 import ovh.plrapps.mapcompose.ui.MapUI
 import ovh.plrapps.mapcompose.ui.state.MapState
+import java.io.InputStream
+import java.util.zip.ZipInputStream
 
 class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
@@ -72,16 +78,18 @@ class MainActivity : ComponentActivity() {
         val makersJson = jsonInfo.readMaker(stringMarkerJson!!)
         // val configuration = configurationCoordinates.getCoordinates(stringjson!!)
         println("Makers: $makersJson")
-
+        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+        println("Max Memory: $maxMemory")
         enableEdgeToEdge()
         setContent {
             TibiaMapTheme {
                 val floor = remember { mutableIntStateOf(7) }
                 val scaleState = remember { mutableFloatStateOf(0f) }
                 val scrollState = remember { mutableStateOf(Pair(0.0, 0.0)) }
-                val onClickUp = remember { mutableStateOf(false) }
+                val x = remember { mutableDoubleStateOf(0.0) }
+                val y = remember { mutableDoubleStateOf(0.0) }
                 val rotation = remember { mutableFloatStateOf(0f) }
-
+                val tileCache = remember { LruCache<String, InputStream>(maxMemory) }
                 viewModel.scale.observe(this){
                     scaleState.floatValue = it.toFloat()
                 }
@@ -98,7 +106,15 @@ class MainActivity : ComponentActivity() {
                     println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
                     val image = "tibiamaps/${floor.intValue}/$zoomLvl/${col}/$row.png"
                     println("Image: $image")
-                    imageZip.unzip2(image, this)
+                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
+                    if (bitmap != null) {
+                        println("Bitmap: $bitmap")
+                        return@TileStreamProvider ZipInputStream(bitmap)
+                    } else {
+                        val imageZip = imageZip.unzip2(image, this)
+                        tileCache.put(image, imageZip)
+                        return@TileStreamProvider imageZip
+                    }
                 }
                 //width: 10 imagenes x 8 height
                 val state = MapState(
@@ -106,7 +122,7 @@ class MainActivity : ComponentActivity() {
                     fullWidth = 2560 ,
                     fullHeight = 2048,
                     tileSize = 256,
-                    workerCount = 4
+                    workerCount = 6
                 ){
                     scale(scaleState.floatValue)
                     maxScale(15f)
@@ -155,6 +171,8 @@ class MainActivity : ComponentActivity() {
                     println("CentroIdY: ${state.centroidY}")
                     println("Scroll: ${state.scroll.x}")
                     println("Scroll: ${state.scroll.y}")
+                    x.doubleValue = state.centroidX
+                    y.doubleValue = state.centroidY
                     println("//////////////////////////////////")
                 }
 
@@ -205,19 +223,20 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             ) {Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "") }
-                            Text(
-                                text = floor.intValue.toString(),
+                            TickerView(
                                 modifier = Modifier
                                     .padding(5.dp)
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(5.dp)
                                     .align(Alignment.CenterHorizontally),
+                                text = tibiaMaps.realFloor(floor.intValue).toString(),
                                 color = Color.White,
-                                style = MaterialTheme.typography.labelMedium
+                                size = 45f,
                             )
                             FloatingActionButton(
                                 modifier = Modifier.padding(5.dp),
                                 onClick = {
                                     if (floor.intValue < 15) {
-                                        //viewModel.setOnClickUp(true)
                                         floor.intValue++
                                         viewModel.setScale(state.scale)
                                         viewModel.setRotation(state.rotation)
@@ -229,14 +248,26 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        Text(
-                            text = "Tibia Map by Mike",
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(25.dp),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Column(
+                            Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                        ) {
+                            Text(
+                                text = "X: ${x.doubleValue.toFloat()} Y: ${y.doubleValue.toFloat()}; Z: ${tibiaMaps.realFloor(floor.intValue)}",
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(0.dp),
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "Tibia Map by Mike",
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(25.dp),
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                     }
                 }
             }
