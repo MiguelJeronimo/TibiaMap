@@ -40,4 +40,8 @@ class TibiaMap {
         return image
     }
 
+    fun realFloor(floor: Int): Int{
+        return (floor-7)*(-1)
+    }
+
 }

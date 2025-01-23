@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainSearchBar(modifier: Modifier = Modifier, isVisibleMap: MutableState<Boolean>){
-    var searchQuery = remember { mutableStateOf("") }
+    val searchQuery = remember { mutableStateOf("") }
     val items = listOf(
         "Apple",
         "Banana",
@@ -40,7 +40,7 @@ fun MainSearchBar(modifier: Modifier = Modifier, isVisibleMap: MutableState<Bool
         "Honeydew"
     )
 
-    var active = remember { mutableStateOf(false) }
+    val active = remember { mutableStateOf(false) }
     val filteredItems =
         items.filter { it.contains(searchQuery.value, ignoreCase = true) }
 
