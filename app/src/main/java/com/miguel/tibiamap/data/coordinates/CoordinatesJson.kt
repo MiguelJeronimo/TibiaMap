@@ -1,4 +1,4 @@
-package com.miguel.tibiamap.domain.data
+package com.miguel.tibiamap.data.coordinates
 
 import com.google.gson.Gson
 import com.miguel.tibiamap.domain.Coordinate

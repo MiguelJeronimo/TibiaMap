@@ -2,7 +2,7 @@ package com.miguel.tibiamap.maps
 
 import android.content.Context
 import com.miguel.tibiamap.R
-import com.miguel.tibiamap.domain.data.CoordinatesJson
+import com.miguel.tibiamap.data.coordinates.CoordinatesJson
 import com.miguel.tibiamap.utils.JsonInfo
 import java.io.InputStream
 import java.util.zip.ZipEntry

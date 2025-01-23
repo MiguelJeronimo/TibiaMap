@@ -6,7 +6,6 @@ import android.util.LruCache
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,12 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.miguel.tibiamap.ViewModels.ViewModelMap
+import androidx.lifecycle.ViewModelProvider
 import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
 import com.miguel.tibiamap.presentation.ToolTipMaker
+import com.miguel.tibiamap.presentation.ViewModels.ViewModelMap
 import com.miguel.tibiamap.presentation.components.MainSearchBar
 import com.miguel.tibiamap.presentation.components.TickerView
+import com.miguel.tibiamap.presentation.viewmodelfactories.ViewModelMapFactory
 import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
 import kotlinx.coroutines.launch
@@ -58,7 +58,6 @@ import ovh.plrapps.mapcompose.api.enableRotation
 import ovh.plrapps.mapcompose.api.maxScale
 import ovh.plrapps.mapcompose.api.minScale
 import ovh.plrapps.mapcompose.api.removeAllMarkers
-import ovh.plrapps.mapcompose.api.removeMarker
 import ovh.plrapps.mapcompose.api.rotation
 import ovh.plrapps.mapcompose.api.scale
 import ovh.plrapps.mapcompose.api.scroll
@@ -69,18 +68,19 @@ import ovh.plrapps.mapcompose.ui.MapUI
 import ovh.plrapps.mapcompose.ui.state.MapState
 import java.io.InputStream
 import java.util.zip.ZipInputStream
+import org.koin.android.ext.android.inject
 
 @Suppress("NAME_SHADOWING")
 class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
     private val jsonInfo = JsonInfo()
     private val tibiaMaps = TibiaMap()
-    private val viewModel: ViewModelMap by viewModels()
-
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("DiscouragedApi", "UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val factory: ViewModelMapFactory by inject()
+        val viewModel = ViewModelProvider(this, factory)[ViewModelMap::class.java]
         val coordinates = R.raw.coordinates
         val markersJson = R.raw.markers
         val stringjson = jsonInfo.readJSON(context = this, resId = coordinates)

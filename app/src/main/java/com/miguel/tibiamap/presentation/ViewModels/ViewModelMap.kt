@@ -1,11 +1,12 @@
-package com.miguel.tibiamap.ViewModels
+package com.miguel.tibiamap.presentation.ViewModels
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.miguel.tibiamap.domain.usecase.UseCaseNpcMetadata
 import com.miguel.tibiamap.maps.TibiaMap
 import ovh.plrapps.mapcompose.ui.state.MapState
 
-class ViewModelMap: ViewModel() {
+class ViewModelMap(private val useCaseNpcMetadata: UseCaseNpcMetadata): ViewModel() {
     private val tibiaMaps = TibiaMap()
     private val _scale = MutableLiveData<Float>()
     private val _mapState = MutableLiveData<MapState>()
