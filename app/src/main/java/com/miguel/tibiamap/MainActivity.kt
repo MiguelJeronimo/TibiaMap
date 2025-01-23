@@ -9,20 +9,26 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,6 +48,7 @@ import com.miguel.tibiamap.presentation.components.MainSearchBar
 import com.miguel.tibiamap.presentation.components.TickerView
 import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
+import kotlinx.coroutines.launch
 import ovh.plrapps.mapcompose.api.addLayer
 import ovh.plrapps.mapcompose.api.addMarker
 import ovh.plrapps.mapcompose.api.centroidX
@@ -50,6 +57,8 @@ import ovh.plrapps.mapcompose.api.enableFlingZoom
 import ovh.plrapps.mapcompose.api.enableRotation
 import ovh.plrapps.mapcompose.api.maxScale
 import ovh.plrapps.mapcompose.api.minScale
+import ovh.plrapps.mapcompose.api.removeAllMarkers
+import ovh.plrapps.mapcompose.api.removeMarker
 import ovh.plrapps.mapcompose.api.rotation
 import ovh.plrapps.mapcompose.api.scale
 import ovh.plrapps.mapcompose.api.scroll
@@ -61,6 +70,7 @@ import ovh.plrapps.mapcompose.ui.state.MapState
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
+@Suppress("NAME_SHADOWING")
 class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
     private val jsonInfo = JsonInfo()
@@ -90,6 +100,12 @@ class MainActivity : ComponentActivity() {
                 val y = remember { mutableDoubleStateOf(0.0) }
                 val rotation = remember { mutableFloatStateOf(0f) }
                 val tileCache = remember { LruCache<String, InputStream>(maxMemory) }
+                val markerVisibility = remember { mutableStateOf(false) }
+                //state of bottomsheets
+                val sheetState = rememberModalBottomSheetState()
+                val scope = rememberCoroutineScope()
+                val showBottomSheet = remember { mutableStateOf(false) }
+
                 viewModel.scale.observe(this){
                     scaleState.floatValue = it.toFloat()
                 }
@@ -132,36 +148,40 @@ class MainActivity : ComponentActivity() {
                 }.apply {
                     shouldLoopScale = true
                     //Agregar la capa del mapa con el TileStreamProvider
-                    makersJson.forEach {
-                        if (it.z == floor.intValue) {
-                            println("Z: ${it.z}")
-                            addMarker(
-                                id = it.description,
-                                x = tibiaMaps.pixelInX(it.x),
-                                y = tibiaMaps.pixelInY(it.y)
-                            ) {
-                                //get id to resource image with name string
-                                val tooltipState = rememberTooltipState(isPersistent = true)
-                                val scope = rememberCoroutineScope()
-                                val resId = resources.getIdentifier(
-                                    tibiaMaps.imageName(it.icon),
-                                    "drawable",
-                                    packageName
-                                )
-                                ToolTipMaker(
-                                    scope = scope,
-                                    description = it.description,
-                                    icon = resId,
-                                    tooltipState = tooltipState
-                                )
+                    if (markerVisibility.value){
+                        makersJson.forEach {
+                            if (it.z == floor.intValue) {
+                                addMarker(
+                                    id = it.description,
+                                    x = tibiaMaps.pixelInX(it.x),
+                                    y = tibiaMaps.pixelInY(it.y)
+                                ) {
+                                    //get id to resource image with name string
+                                    val tooltipState = rememberTooltipState(isPersistent = true)
+                                    val scope = rememberCoroutineScope()
+                                    val resId = resources.getIdentifier(
+                                        tibiaMaps.imageName(it.icon),
+                                        "drawable",
+                                        packageName
+                                    )
+                                    ToolTipMaker(
+                                        scope = scope,
+                                        description = it.description,
+                                        icon = resId,
+                                        tooltipState = tooltipState
+                                    )
+                                }
                             }
                         }
+                    }
+
+                    if (!markerVisibility.value){
+                        removeAllMarkers()
                     }
                     addLayer(titleStreamProvider)
                     enableFlingZoom()
                     enableRotation()
                 }
-
                 state.setStateChangeListener {
                     println("Scale: ${state.scale}")
                     println("Max Scale: ${state.maxScale}")
@@ -175,7 +195,6 @@ class MainActivity : ComponentActivity() {
                     y.doubleValue = state.centroidY
                     println("//////////////////////////////////")
                 }
-
                 //Mandamos la marca al dp thais
 //                LaunchedEffect(Unit) {
 //                    state.scrollTo(
@@ -186,12 +205,32 @@ class MainActivity : ComponentActivity() {
 //                    //state.rotation = 45F
 //                    //state.scale = 15.0f
 //                }
-
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    if (showBottomSheet.value) {
+                        ModalBottomSheet(
+                            modifier = Modifier.fillMaxHeight(),
+                            onDismissRequest = {
+                                showBottomSheet.value = false
+                            },
+                            sheetState = sheetState
+                        ) {
+                            // Sheet content
+                            Button(onClick = {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    if (!sheetState.isVisible) {
+                                        showBottomSheet.value = false
+                                    }
+                                }
+                            }) {
+                                Text("Hide bottom sheet")
+                            }
+                        }
+                    }
                     Box(Modifier.fillMaxSize()) {
                         val isVisibleMap = remember { mutableStateOf(true) }
+                        println("isVisibleMap: ${isVisibleMap.value}")
                         MainSearchBar(
                                 modifier = Modifier
                                     .padding(5.dp)
@@ -248,8 +287,20 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
+                        FloatingActionButton(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .align(Alignment.CenterStart),
+                            onClick = {
+                                //showBottomSheet.value = true
+                                markerVisibility.value = !markerVisibility.value
+                            }
+                        ) {Icon(Icons.Filled.LocationOn, contentDescription = "") }
+
                         Column(
-                            Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                            Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
                         ) {
                             Text(
                                 text = "X: ${x.doubleValue.toFloat()} Y: ${y.doubleValue.toFloat()}; Z: ${tibiaMaps.realFloor(floor.intValue)}",

@@ -12,6 +12,7 @@ class ViewModelMap: ViewModel() {
     private val _rotation = MutableLiveData<Float>()
     private val _floor = MutableLiveData<Int>()
     private val _scroll = MutableLiveData<Pair<Double, Double>>()
+    private val _markerVisibility = MutableLiveData<Boolean>()
 
     val scale: MutableLiveData<Float> get() = _scale
     val mapState: MutableLiveData<MapState> get() = _mapState
