@@ -1,4 +1,4 @@
-package com.miguel.tibiamap
+package com.miguel.tibiamap.presentation.views
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -39,9 +39,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import com.miguel.tibiamap.R
 import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
-import com.miguel.tibiamap.presentation.ToolTipMaker
+import com.miguel.tibiamap.presentation.components.ToolTipMaker
 import com.miguel.tibiamap.presentation.ViewModels.ViewModelMap
 import com.miguel.tibiamap.presentation.components.MainSearchBar
 import com.miguel.tibiamap.presentation.components.TickerView
@@ -81,6 +82,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val factory: ViewModelMapFactory by inject()
         val viewModel = ViewModelProvider(this, factory)[ViewModelMap::class.java]
+        viewModel.searchNPC("Rashid")
         val coordinates = R.raw.coordinates
         val markersJson = R.raw.markers
         val stringjson = jsonInfo.readJSON(context = this, resId = coordinates)
@@ -117,6 +119,15 @@ class MainActivity : ComponentActivity() {
                 viewModel.rotation.observe(this){
                    rotation.floatValue = it
                 }
+
+                viewModel.searchNpc.observe(this){
+                    println("NPC: $it")
+                }
+
+//                viewModel.npcMetadata.observe(this) {
+//                    println("Size: ${it!!.size}   NPC: ${it}")
+//                    println("COORDINATES: ${it[0].coordinates}")
+//                }
 
                 val titleStreamProvider = TileStreamProvider { row, col, zoomLvl ->
                     println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")

@@ -1,4 +1,4 @@
-package com.miguel.tibiamap.presentation
+package com.miguel.tibiamap.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -34,7 +34,7 @@ fun ToolTipMaker(
     TooltipBox(
         positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
         state = tooltipState,
-        tooltip = {ToolTipMakerDescription(description = description, icon = icon)}
+        tooltip = { ToolTipMakerDescription(description = description, icon = icon) }
     ) {
         Column(modifier.padding(5.dp)) {
             IconButton(
