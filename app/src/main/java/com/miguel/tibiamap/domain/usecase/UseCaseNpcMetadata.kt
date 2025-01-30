@@ -1,7 +1,9 @@
 package com.miguel.tibiamap.domain.usecase
 
+import android.content.Context
 import com.miguel.tibiamap.data.repositories.NpcMetaDataRepository
 import com.miguel.tibiamap.domain.models.NpcItem
+import com.miguel.tibiamap.domain.models.RashidData
 import com.miguel.tibiamap.utils.Searching
 
 
@@ -20,9 +22,21 @@ class UseCaseNpcMetadata(private val repository: NpcMetaDataRepository) {
         }
     }
 
-    suspend fun rashid(name: String): String? {
+    suspend fun rashid(name: String, context:Context, jsonId: Int): RashidData? {
         val response = repository.rashid()
-        return response
+        if (response != null){
+            println("CITY: $response")
+            val jsonString = search.readJSON(context, jsonId)
+            val rashidInfo = search.rashidGson(jsonString!!)
+            val ubication = search.rashidUbication(
+                data = rashidInfo!!.rashid,
+                city = response
+            )
+            println("UBICACION: $ubication")
+            return ubication
+        } else {
+            return null
+        }
     }
 
 }

@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.miguel.tibiamap.R
+import com.miguel.tibiamap.domain.models.RashidData
 import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
 import com.miguel.tibiamap.presentation.components.ToolTipMaker
@@ -70,6 +72,7 @@ import ovh.plrapps.mapcompose.ui.state.MapState
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 import org.koin.android.ext.android.inject
+import ovh.plrapps.mapcompose.api.scrollTo
 
 @Suppress("NAME_SHADOWING")
 class MainActivity : ComponentActivity() {
@@ -85,6 +88,7 @@ class MainActivity : ComponentActivity() {
         viewModel.searchNPC("Rashid")
         val coordinates = R.raw.coordinates
         val markersJson = R.raw.markers
+        val jsonRashid = R.raw.rashid_location
         val stringjson = jsonInfo.readJSON(context = this, resId = coordinates)
         val stringMarkerJson = jsonInfo.readJSON(context = this, resId = markersJson)
         val makersJson = jsonInfo.readMaker(stringMarkerJson!!)
@@ -108,6 +112,8 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val showBottomSheet = remember { mutableStateOf(false) }
 
+                val rashidUbucationState = remember { mutableStateOf(RashidData()) }
+
                 viewModel.scale.observe(this){
                     scaleState.floatValue = it.toFloat()
                 }
@@ -124,10 +130,11 @@ class MainActivity : ComponentActivity() {
                     println("NPC: $it")
                 }
 
-//                viewModel.npcMetadata.observe(this) {
-//                    println("Size: ${it!!.size}   NPC: ${it}")
-//                    println("COORDINATES: ${it[0].coordinates}")
-//                }
+                viewModel.rashid.observe(this){
+                   if (it != null){
+                       rashidUbucationState.value = it
+                   }
+                }
 
                 val titleStreamProvider = TileStreamProvider { row, col, zoomLvl ->
                     println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
@@ -207,15 +214,19 @@ class MainActivity : ComponentActivity() {
                     println("//////////////////////////////////")
                 }
                 //Mandamos la marca al dp thais
-//                LaunchedEffect(Unit) {
-//                    state.scrollTo(
-//                        x = tibiaMaps.pixelInX(32369),
-//                        y = tibiaMaps.pixelInY(32241),
-//                        //destScale = 15f
-//                    )
-//                    //state.rotation = 45F
-//                    //state.scale = 15.0f
-//                }
+                if (rashidUbucationState.value.city != null){
+                    LaunchedEffect(Unit) {
+                        state.scrollTo(
+                            x = tibiaMaps.pixelInX(rashidUbucationState.value.x!!),
+                            y = tibiaMaps.pixelInY(rashidUbucationState.value.y!!),
+                            //destScale = 15f
+                        )
+                        floor.intValue = rashidUbucationState.value.floor!!
+                        //state.rotation = 45F
+                        //state.scale = 15.0f
+                    }
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -241,12 +252,13 @@ class MainActivity : ComponentActivity() {
                     }
                     Box(Modifier.fillMaxSize()) {
                         val isVisibleMap = remember { mutableStateOf(true) }
-                        println("isVisibleMap: ${isVisibleMap.value}")
                         MainSearchBar(
                                 modifier = Modifier
                                     .padding(5.dp)
                                     .align(Alignment.TopCenter),
-                                isVisibleMap = isVisibleMap
+                                isVisibleMap = isVisibleMap,
+                            jsonRashid = jsonRashid,
+                            context = this@MainActivity
                         )
                         if (isVisibleMap.value) {
                             MapContainer(
