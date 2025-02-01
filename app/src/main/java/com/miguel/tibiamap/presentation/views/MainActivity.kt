@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -40,6 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import com.miguel.tibiamap.R
 import com.miguel.tibiamap.domain.models.RashidData
 import com.miguel.tibiamap.maps.ImageZip
@@ -74,12 +78,13 @@ import java.util.zip.ZipInputStream
 import org.koin.android.ext.android.inject
 import ovh.plrapps.mapcompose.api.scrollTo
 
-@Suppress("NAME_SHADOWING")
+@Suppress("NAME_SHADOWING", "UNREACHABLE_CODE")
 class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
     private val jsonInfo = JsonInfo()
     private val tibiaMaps = TibiaMap()
-    @OptIn(ExperimentalMaterial3Api::class)
+    val urlRashidImage = "https://raw.githubusercontent.com/MiguelJeronimo/TtoolsDesktop/main/src/img/rashid.gif"
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @SuppressLint("DiscouragedApi", "UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,15 +145,16 @@ class MainActivity : ComponentActivity() {
                     println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
                     val image = "tibiamaps/${floor.intValue}/$zoomLvl/${col}/$row.png"
                     println("Image: $image")
-                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
-                    if (bitmap != null) {
-                        println("Bitmap: $bitmap")
-                        return@TileStreamProvider ZipInputStream(bitmap)
-                    } else {
-                        val imageZip = imageZip.unzip2(image, this)
-                        tileCache.put(image, imageZip)
-                        return@TileStreamProvider imageZip
-                    }
+                   imageZip.unzip2(image, this)
+//                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
+//                    if (bitmap != null) {
+//                        println("Bitmap: $bitmap")
+//                        return@TileStreamProvider ZipInputStream(bitmap)
+//                    } else {
+//                        val imageZip = imageZip.unzip2(image, this)
+//                        tileCache.put(image, imageZip)
+//                        return@TileStreamProvider imageZip
+//                    }
                 }
                 //width: 10 imagenes x 8 height
                 val state = MapState(
@@ -213,7 +219,7 @@ class MainActivity : ComponentActivity() {
                     y.doubleValue = state.centroidY
                     println("//////////////////////////////////")
                 }
-                //Mandamos la marca al dp thais
+                //Ubucation of rashid
                 if (rashidUbucationState.value.city != null){
                     LaunchedEffect(Unit) {
                         state.scrollTo(
