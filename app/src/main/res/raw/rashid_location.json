@@ -1,0 +1,53 @@
+{
+  "rashid": [
+    {
+      "day": "Monday",
+      "city": "Svargrond",
+      "x": 32204,
+      "y": 31155,
+      "floor": 7
+    },
+    {
+      "day": "Tuesday",
+      "city": "Liberty Bay",
+      "x": 32302,
+      "y": 32834,
+      "floor": 7
+    },
+    {
+      "day": "Wednesday",
+      "city": "Port Hope",
+      "x": 32577,
+      "y": 32752,
+      "floor": 7
+    },
+    {
+      "day": "Thursday",
+      "city": "Ankrahmun",
+      "x": 33068,
+      "y": 32879,
+      "floor": 6
+    },
+    {
+      "day": "Friday",
+      "city": "Darashia",
+      "x": 32237,
+      "y": 32479,
+      "floor": 7
+    },
+    {
+      "day": "Saturday",
+      "city": "Edron",
+      "x": 33171,
+      "y": 31807,
+      "floor": 6
+    },
+    {
+      "day": "Sunday",
+      "city": "Carlin",
+      "x": 32327,
+      "y": 31780,
+      "floor": 6
+    }
+  ]
+}

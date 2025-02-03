@@ -1,4 +1,4 @@
-package com.miguel.tibiamap
+package com.miguel.tibiamap.presentation.views
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -6,13 +6,13 @@ import android.util.LruCache
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,12 +40,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.miguel.tibiamap.ViewModels.ViewModelMap
+import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.miguel.tibiamap.R
+import com.miguel.tibiamap.domain.models.RashidData
 import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
-import com.miguel.tibiamap.presentation.ToolTipMaker
+import com.miguel.tibiamap.presentation.components.ToolTipMaker
+import com.miguel.tibiamap.presentation.ViewModels.ViewModelMap
 import com.miguel.tibiamap.presentation.components.MainSearchBar
 import com.miguel.tibiamap.presentation.components.TickerView
+import com.miguel.tibiamap.presentation.viewmodelfactories.ViewModelMapFactory
 import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
 import kotlinx.coroutines.launch
@@ -58,7 +65,6 @@ import ovh.plrapps.mapcompose.api.enableRotation
 import ovh.plrapps.mapcompose.api.maxScale
 import ovh.plrapps.mapcompose.api.minScale
 import ovh.plrapps.mapcompose.api.removeAllMarkers
-import ovh.plrapps.mapcompose.api.removeMarker
 import ovh.plrapps.mapcompose.api.rotation
 import ovh.plrapps.mapcompose.api.scale
 import ovh.plrapps.mapcompose.api.scroll
@@ -69,20 +75,25 @@ import ovh.plrapps.mapcompose.ui.MapUI
 import ovh.plrapps.mapcompose.ui.state.MapState
 import java.io.InputStream
 import java.util.zip.ZipInputStream
+import org.koin.android.ext.android.inject
+import ovh.plrapps.mapcompose.api.scrollTo
 
-@Suppress("NAME_SHADOWING")
+@Suppress("NAME_SHADOWING", "UNREACHABLE_CODE")
 class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
     private val jsonInfo = JsonInfo()
     private val tibiaMaps = TibiaMap()
-    private val viewModel: ViewModelMap by viewModels()
-
-    @OptIn(ExperimentalMaterial3Api::class)
+    val urlRashidImage = "https://raw.githubusercontent.com/MiguelJeronimo/TtoolsDesktop/main/src/img/rashid.gif"
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @SuppressLint("DiscouragedApi", "UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val factory: ViewModelMapFactory by inject()
+        val viewModel = ViewModelProvider(this, factory)[ViewModelMap::class.java]
+        viewModel.searchNPC("Rashid")
         val coordinates = R.raw.coordinates
         val markersJson = R.raw.markers
+        val jsonRashid = R.raw.rashid_location
         val stringjson = jsonInfo.readJSON(context = this, resId = coordinates)
         val stringMarkerJson = jsonInfo.readJSON(context = this, resId = markersJson)
         val makersJson = jsonInfo.readMaker(stringMarkerJson!!)
@@ -106,6 +117,8 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val showBottomSheet = remember { mutableStateOf(false) }
 
+                val rashidUbucationState = remember { mutableStateOf(RashidData()) }
+
                 viewModel.scale.observe(this){
                     scaleState.floatValue = it.toFloat()
                 }
@@ -118,19 +131,30 @@ class MainActivity : ComponentActivity() {
                    rotation.floatValue = it
                 }
 
+                viewModel.searchNpc.observe(this){
+                    println("NPC: $it")
+                }
+
+                viewModel.rashid.observe(this){
+                   if (it != null){
+                       rashidUbucationState.value = it
+                   }
+                }
+
                 val titleStreamProvider = TileStreamProvider { row, col, zoomLvl ->
                     println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
                     val image = "tibiamaps/${floor.intValue}/$zoomLvl/${col}/$row.png"
                     println("Image: $image")
-                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
-                    if (bitmap != null) {
-                        println("Bitmap: $bitmap")
-                        return@TileStreamProvider ZipInputStream(bitmap)
-                    } else {
-                        val imageZip = imageZip.unzip2(image, this)
-                        tileCache.put(image, imageZip)
-                        return@TileStreamProvider imageZip
-                    }
+                   imageZip.unzip2(image, this)
+//                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
+//                    if (bitmap != null) {
+//                        println("Bitmap: $bitmap")
+//                        return@TileStreamProvider ZipInputStream(bitmap)
+//                    } else {
+//                        val imageZip = imageZip.unzip2(image, this)
+//                        tileCache.put(image, imageZip)
+//                        return@TileStreamProvider imageZip
+//                    }
                 }
                 //width: 10 imagenes x 8 height
                 val state = MapState(
@@ -195,16 +219,20 @@ class MainActivity : ComponentActivity() {
                     y.doubleValue = state.centroidY
                     println("//////////////////////////////////")
                 }
-                //Mandamos la marca al dp thais
-//                LaunchedEffect(Unit) {
-//                    state.scrollTo(
-//                        x = tibiaMaps.pixelInX(32369),
-//                        y = tibiaMaps.pixelInY(32241),
-//                        //destScale = 15f
-//                    )
-//                    //state.rotation = 45F
-//                    //state.scale = 15.0f
-//                }
+                //Ubucation of rashid
+                if (rashidUbucationState.value.city != null){
+                    LaunchedEffect(Unit) {
+                        state.scrollTo(
+                            x = tibiaMaps.pixelInX(rashidUbucationState.value.x!!),
+                            y = tibiaMaps.pixelInY(rashidUbucationState.value.y!!),
+                            //destScale = 15f
+                        )
+                        floor.intValue = rashidUbucationState.value.floor!!
+                        //state.rotation = 45F
+                        //state.scale = 15.0f
+                    }
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -230,12 +258,13 @@ class MainActivity : ComponentActivity() {
                     }
                     Box(Modifier.fillMaxSize()) {
                         val isVisibleMap = remember { mutableStateOf(true) }
-                        println("isVisibleMap: ${isVisibleMap.value}")
                         MainSearchBar(
                                 modifier = Modifier
                                     .padding(5.dp)
                                     .align(Alignment.TopCenter),
-                                isVisibleMap = isVisibleMap
+                                isVisibleMap = isVisibleMap,
+                            jsonRashid = jsonRashid,
+                            context = this@MainActivity
                         )
                         if (isVisibleMap.value) {
                             MapContainer(

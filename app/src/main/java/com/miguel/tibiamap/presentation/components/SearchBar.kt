@@ -1,5 +1,6 @@
 package com.miguel.tibiamap.presentation.components
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,10 +25,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.miguel.tibiamap.presentation.ViewModels.ViewModelMap
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainSearchBar(modifier: Modifier = Modifier, isVisibleMap: MutableState<Boolean>){
+fun MainSearchBar(
+    modifier: Modifier = Modifier,
+    isVisibleMap: MutableState<Boolean>,
+    viewModelMap: ViewModelMap = koinViewModel<ViewModelMap>(),
+    jsonRashid: Int? = null,
+    context: Context? = null
+){
     val searchQuery = remember { mutableStateOf("") }
     val items = listOf(
         "Apple",
@@ -80,9 +89,15 @@ fun MainSearchBar(modifier: Modifier = Modifier, isVisibleMap: MutableState<Bool
     ) {
         Column {
             Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                ChipFilter("Rashid")
-                ChipFilter("Rashid")
-                ChipFilter("Rashid")
+                ChipAsisst(
+                    "Rashid",
+                    onClick = {
+                        viewModelMap.searchRashid(
+                            name= "Rashid",
+                            context = context!!,
+                            jsonId = jsonRashid!!)
+                    }
+                )
             }
             HorizontalDivider(
                 modifier = Modifier.align(Alignment.CenterHorizontally),

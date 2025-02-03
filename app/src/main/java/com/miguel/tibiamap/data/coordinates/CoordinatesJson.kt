@@ -1,8 +1,9 @@
-package com.miguel.tibiamap.domain.data
+package com.miguel.tibiamap.data.coordinates
 
 import com.google.gson.Gson
 import com.miguel.tibiamap.domain.Coordinate
 import com.miguel.tibiamap.domain.Coordinates
+import com.miguel.tibiamap.domain.models.NpcItem
 
 class CoordinatesJson {
     fun getCoordinates(data: String): Coordinates? {
@@ -15,5 +16,4 @@ class CoordinatesJson {
         val result = coordinates.find { it.col == col && it.row == row && it.floor == floor }
         return result
     }
-
 }

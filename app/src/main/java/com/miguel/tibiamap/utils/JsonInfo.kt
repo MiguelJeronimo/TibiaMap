@@ -1,14 +1,13 @@
 package com.miguel.tibiamap.utils
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.Gson
 import com.miguel.tibiamap.domain.Coordinates
 import com.miguel.tibiamap.domain.models.Marker
 import org.apache.commons.io.IOUtils
 import java.io.IOException
 
-class JsonInfo {
+open class JsonInfo {
 
     fun parseWithGson(context: Context) {
         val jsonString = loadJSONFromAsset(context, "data.json")
@@ -43,6 +42,5 @@ class JsonInfo {
         val makers = gson.fromJson(data, Array<Marker>::class.java).toList()
         return makers
     }
-
 
 }
