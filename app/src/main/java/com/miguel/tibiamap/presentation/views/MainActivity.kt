@@ -2,10 +2,10 @@ package com.miguel.tibiamap.presentation.views
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.LruCache
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -17,12 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,22 +38,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.miguel.tibiamap.R
 import com.miguel.tibiamap.domain.models.RashidData
 import com.miguel.tibiamap.maps.ImageZip
 import com.miguel.tibiamap.maps.TibiaMap
 import com.miguel.tibiamap.presentation.components.ToolTipMaker
 import com.miguel.tibiamap.presentation.ViewModels.ViewModelMap
+import com.miguel.tibiamap.presentation.components.ChipFilter
 import com.miguel.tibiamap.presentation.components.MainSearchBar
 import com.miguel.tibiamap.presentation.components.TickerView
+import com.miguel.tibiamap.presentation.components.npcinformationdefault.ModalNpcInformation
 import com.miguel.tibiamap.presentation.viewmodelfactories.ViewModelMapFactory
 import com.miguel.tibiamap.ui.theme.TibiaMapTheme
 import com.miguel.tibiamap.utils.JsonInfo
-import kotlinx.coroutines.launch
 import ovh.plrapps.mapcompose.api.addLayer
 import ovh.plrapps.mapcompose.api.addMarker
 import ovh.plrapps.mapcompose.api.centroidX
@@ -73,8 +72,6 @@ import ovh.plrapps.mapcompose.api.shouldLoopScale
 import ovh.plrapps.mapcompose.core.TileStreamProvider
 import ovh.plrapps.mapcompose.ui.MapUI
 import ovh.plrapps.mapcompose.ui.state.MapState
-import java.io.InputStream
-import java.util.zip.ZipInputStream
 import org.koin.android.ext.android.inject
 import ovh.plrapps.mapcompose.api.scrollTo
 
@@ -83,6 +80,7 @@ class MainActivity : ComponentActivity() {
     private val imageZip = ImageZip(this)
     private val jsonInfo = JsonInfo()
     private val tibiaMaps = TibiaMap()
+    private lateinit var tileStreamProvider:TileStreamProvider
     val urlRashidImage = "https://raw.githubusercontent.com/MiguelJeronimo/TtoolsDesktop/main/src/img/rashid.gif"
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @SuppressLint("DiscouragedApi", "UnusedMaterial3ScaffoldPaddingParameter")
@@ -99,8 +97,8 @@ class MainActivity : ComponentActivity() {
         val makersJson = jsonInfo.readMaker(stringMarkerJson!!)
         // val configuration = configurationCoordinates.getCoordinates(stringjson!!)
         println("Makers: $makersJson")
-        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
-        println("Max Memory: $maxMemory")
+        //val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+        //println("Max Memory: $maxMemory")
         enableEdgeToEdge()
         setContent {
             TibiaMapTheme {
@@ -110,7 +108,7 @@ class MainActivity : ComponentActivity() {
                 val x = remember { mutableDoubleStateOf(0.0) }
                 val y = remember { mutableDoubleStateOf(0.0) }
                 val rotation = remember { mutableFloatStateOf(0f) }
-                val tileCache = remember { LruCache<String, InputStream>(maxMemory) }
+                //val tileCache = remember { LruCache<String, InputStream>(maxMemory) }
                 val markerVisibility = remember { mutableStateOf(false) }
                 //state of bottomsheets
                 val sheetState = rememberModalBottomSheetState()
@@ -124,6 +122,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 viewModel.scroll.observe(this){
+                    println("Scroll ViewModel: $it")
                     scrollState.value = it
                 }
 
@@ -141,11 +140,19 @@ class MainActivity : ComponentActivity() {
                    }
                 }
 
-                val titleStreamProvider = TileStreamProvider { row, col, zoomLvl ->
-                    println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
+                viewModel.floor.observe(this){
+                    println("FLOOR VIEWMODEL $it")
+                    println("AGREGANDO COORDENADAS: ${scrollState.value}")
+                    floor.intValue = it
+                }
+                println("Valor de Floor en tileProvider---- ${floor.intValue}")
+                tileStreamProvider = TileStreamProvider { row, col, zoomLvl ->
+                    println("Valor de Floor en tileProvider ${floor.intValue}")
+                    println("COORDENADAS: ($row, $col,  $zoomLvl) - FLOOR: ${floor.intValue}")
+//                    println("Row: $row, Col: $col, ZoomLvl: $zoomLvl")
                     val image = "tibiamaps/${floor.intValue}/$zoomLvl/${col}/$row.png"
                     println("Image: $image")
-                   imageZip.unzip2(image, this)
+                    imageZip.unzip2(image, this)
 //                    val bitmap = tileCache.get("$zoomLvl/${col}/$row.png")
 //                    if (bitmap != null) {
 //                        println("Bitmap: $bitmap")
@@ -202,7 +209,7 @@ class MainActivity : ComponentActivity() {
                     if (!markerVisibility.value){
                         removeAllMarkers()
                     }
-                    addLayer(titleStreamProvider)
+                    addLayer(tileStreamProvider)
                     enableFlingZoom()
                     enableRotation()
                 }
@@ -215,57 +222,57 @@ class MainActivity : ComponentActivity() {
                     println("CentroIdY: ${state.centroidY}")
                     println("Scroll: ${state.scroll.x}")
                     println("Scroll: ${state.scroll.y}")
+                    //viewModel.setScrollTo(state.scroll.x, state.scroll.y)
                     x.doubleValue = state.centroidX
                     y.doubleValue = state.centroidY
                     println("//////////////////////////////////")
                 }
                 //Ubucation of rashid
                 if (rashidUbucationState.value.city != null){
+                    state.removeAllMarkers()
+                    println("UBICACION STATE: ${rashidUbucationState.value}")
                     LaunchedEffect(Unit) {
+                        viewModel.setFloor(rashidUbucationState.value.floor!!)
                         state.scrollTo(
                             x = tibiaMaps.pixelInX(rashidUbucationState.value.x!!),
                             y = tibiaMaps.pixelInY(rashidUbucationState.value.y!!),
-                            //destScale = 15f
                         )
-                        floor.intValue = rashidUbucationState.value.floor!!
-                        //state.rotation = 45F
-                        //state.scale = 15.0f
+                        state.addMarker(
+                            id = "Rashid NPC",
+                            x = tibiaMaps.pixelInX(rashidUbucationState.value.x!!),
+                            y = tibiaMaps.pixelInY(rashidUbucationState.value.y!!)
+                        ){
+                            GlideImage(
+                                model = urlRashidImage,
+                                contentDescription = "Rashid",
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clickable {
+                                        showBottomSheet.value = !showBottomSheet.value
+                                    }
+                            )
+                            showBottomSheet.value = true
+                        }
                     }
+
                 }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (showBottomSheet.value) {
-                        ModalBottomSheet(
+                        ModalNpcInformation(
                             modifier = Modifier.fillMaxHeight(),
                             onDismissRequest = {
                                 showBottomSheet.value = false
                             },
-                            sheetState = sheetState
-                        ) {
-                            // Sheet content
-                            Button(onClick = {
-                                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                    if (!sheetState.isVisible) {
-                                        showBottomSheet.value = false
-                                    }
-                                }
-                            }) {
-                                Text("Hide bottom sheet")
-                            }
-                        }
+                            sheetState = sheetState,
+                            showBottomSheet = showBottomSheet,
+                            scope = scope
+                        )
                     }
                     Box(Modifier.fillMaxSize()) {
                         val isVisibleMap = remember { mutableStateOf(true) }
-                        MainSearchBar(
-                                modifier = Modifier
-                                    .padding(5.dp)
-                                    .align(Alignment.TopCenter),
-                                isVisibleMap = isVisibleMap,
-                            jsonRashid = jsonRashid,
-                            context = this@MainActivity
-                        )
                         if (isVisibleMap.value) {
                             MapContainer(
                                 modifier = Modifier
@@ -273,7 +280,15 @@ class MainActivity : ComponentActivity() {
                                 state = state
                             )
                         }
-
+                        MainSearchBar(
+                                modifier = Modifier
+                                    .padding(5.dp)
+                                    .align(Alignment.TopCenter),
+                                    //.zIndex(1f),
+                                isVisibleMap = isVisibleMap,
+                            jsonRashid = jsonRashid,
+                            context = this@MainActivity
+                        )
                         Column (
                             Modifier
                                 .align(Alignment.CenterEnd)
@@ -284,9 +299,11 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     if (floor.intValue > 0) {
                                         //viewModel.setOnClickUp(true)
-                                        floor.intValue--
+                                        val floorState = floor.intValue
+                                        viewModel.setFloor(floorState - 1)
                                         viewModel.setScale(state.scale)
                                         viewModel.setRotation(state.rotation)
+                                        println("AGREGANDO COORDENADAS: ${state.centroidX}, ${state.centroidY}")
                                         viewModel.setScrollTo(state.centroidX, state.centroidY)
                                     }
                                 }
@@ -305,7 +322,8 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(5.dp),
                                 onClick = {
                                     if (floor.intValue < 15) {
-                                        floor.intValue++
+                                        val floorState = floor.intValue
+                                        viewModel.setFloor(floorState + 1)
                                         viewModel.setScale(state.scale)
                                         viewModel.setRotation(state.rotation)
                                         viewModel.setScrollTo(state.centroidX, state.centroidY)

@@ -24,6 +24,7 @@ class UseCaseNpcMetadata(private val repository: NpcMetaDataRepository) {
 
     suspend fun rashid(name: String, context:Context, jsonId: Int): RashidData? {
         val response = repository.rashid()
+        println("REPOSITORY RASHID: $response")
         if (response != null){
             println("CITY: $response")
             val jsonString = search.readJSON(context, jsonId)
