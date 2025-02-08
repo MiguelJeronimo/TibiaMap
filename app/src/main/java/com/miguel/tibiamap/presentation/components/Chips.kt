@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -16,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.miguel.tibiamap.R
@@ -54,10 +58,16 @@ fun ChipAsisst(
     text: String,
     state: MutableState<Boolean>? = null,
     viewModelMap: ViewModelMap = koinViewModel<ViewModelMap>(),
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ){
     AssistChip(
+        modifier = modifier,
         onClick = onClick,
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = Color.White
+        ),
         label = {
             Text(text)
         },

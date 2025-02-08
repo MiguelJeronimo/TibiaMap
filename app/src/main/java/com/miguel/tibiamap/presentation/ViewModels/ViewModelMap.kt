@@ -40,6 +40,7 @@ class ViewModelMap(private val useCaseNpcMetadata: UseCaseNpcMetadata): ViewMode
         scroll.value = Pair(tibiaMaps.pixelInX(32369), tibiaMaps.pixelInY(32241))
         rotation.value = 0.0F
         searchBarOptionVisibility.value = false
+        floor.value = 7
     }
 
     fun npcMetadata(){
